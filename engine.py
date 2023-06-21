@@ -40,6 +40,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
+        #targets = torch.unsqueeze(targets, 2)
+
+
         if mixup_fn is not None:
             samples, targets = mixup_fn(samples, targets)
 
@@ -89,14 +92,16 @@ def evaluate(data_loader, model, device):
         images = images.to(device, non_blocking=True)
         target = target.to(device, non_blocking=True)
 
+        #target = torch.unsqueeze(target, 2)
+
         # compute output
         with torch.cuda.amp.autocast():
             output = model(images)
             loss = criterion(output, target.long())
 
-        N, C, D, H, W = output.shape
+        # root mean square error
         #error = torch.sqrt(torch.sum(torch.square(output.reshape(N, D, H, W) - target), dim = (1,2,3)))/torch.sqrt(torch.sum(torch.square(target), dim = (1,2,3)))*100
-        error = torch.mean(torch.sqrt(torch.sum(torch.square(output.reshape(N, D, H, W) - target), dim = (1,2,3)))/torch.sqrt(torch.sum(torch.square(target), dim = (1,2,3))+0.000001))*100
+        error = torch.mean(torch.sqrt(torch.sum(torch.square(output - target), dim = (1,2)))/torch.sqrt(torch.sum(torch.square(target), dim = (1,2))+0.000001))*100
         #acc1, acc5 = accuracy(output, target.long(), topk=(1, 5)) 
 
         #print(error)
@@ -107,37 +112,38 @@ def evaluate(data_loader, model, device):
         #metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
 
     #dict_channel = {0: 'temperature', 1: 'salinity', 2: 'oxygen', 3: 'chla', 4: 'ppn'}
-    directory = '/home/gpietrop/fig/images/1/'
+    directory = '/home/gpietrop/fig/images/0/'
 
     print('New image')
-    number_fig = len(target[0, :, 0, 0])  # number of levels of depth
+    #number_fig = len(target[0, :, 0, 0])  # number of levels of depth
 
-    for i in range(number_fig):
-        cmap = plt.get_cmap('Greens')
-        target2 = target.cpu().detach().numpy()
-        plt.imshow(target2[0, i, :, :], cmap=cmap)
-        #plt.title(dict_channel[3])
-        plt.title('chla')
-        plt.colorbar()
-        plt.savefig(directory + "/profondity_level_" + str(i) + ".png")
-        plt.close()
+    #for i in range(number_fig):
+    cmap = plt.get_cmap('Greens')
+    target2 = torch.squeeze(target, 1)
+    target2 = target2.cpu().detach().numpy()
+    plt.imshow(target2[1, :, :], cmap=cmap)
+    #plt.title(dict_channel[3])
+    plt.title('temp')
+    plt.colorbar()
+    plt.savefig(directory + "profondity_level_" + str(2) + ".png")
+    plt.close()
             
     print('Plot done')
 
-    directory = '/home/gpietrop/fig/output/1/'
+    directory = '/home/gpietrop/fig/output/0/'
 
     print('New output')
-    number_fig = len(output[0, 0, :, 0, 0])  # number of levels of depth
+    #number_fig = len(output[0, 0, :, 0, 0])  # number of levels of depth
 
-    for i in range(number_fig):
-        cmap = plt.get_cmap('Greens')
-        output2 = output.cpu().detach().numpy()
-        plt.imshow(output2[0, 0, i, :, :], cmap=cmap)
-        #plt.title(dict_channel[3])
-        plt.title('chla')
-        plt.colorbar()
-        plt.savefig(directory + "/profondity_level_" + str(i) + ".png")
-        plt.close()
+    #for i in range(number_fig):
+    cmap = plt.get_cmap('Greens')
+    output2 = output.cpu().detach().numpy()
+    plt.imshow(output2[1, 0, :, :], cmap=cmap)
+    #plt.title(dict_channel[3])
+    plt.title('temp')
+    plt.colorbar()
+    plt.savefig(directory + "profondity_level_" + str(2) + ".png")
+    plt.close()
             
     print('Plot done')
     # gather the stats from all processes
