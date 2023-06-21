@@ -120,8 +120,10 @@ class SEADataset(Dataset):
         ds = data.reshape(C, D, H, W)
         ds[:, 30, :, :] = ds[:, 29, :, :]
 
-        X = ds[:3, :30, :30, :30]
-        y = ds[0, :30, :30, :30]
+        X = ds[:3, 0, :30, :30]
+        y = ds[0, 0, :30, :30]
+
+        y = torch.unsqueeze(y, 0)
         #D, H, W = y.shape
         #y = y.reshape(1, D, H, W)      
 
@@ -131,7 +133,9 @@ class SEADataset(Dataset):
 
 def build_transform(is_train, args):
     #resize_im = args.input_size > 32
-    #if is_train:
+    t = []
+    if is_train:
+        t.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
         # this should always dispatch to transforms_imagenet_train
     #    transform = create_transform(
     #        input_size=args.input_size,
@@ -150,7 +154,6 @@ def build_transform(is_train, args):
     #            args.input_size, padding=4)
     #    return transform
 
-    t = []
     #if resize_im:
     #    size = int((256 / 224) * args.input_size)
     #    t.append(
@@ -159,5 +162,4 @@ def build_transform(is_train, args):
     #    t.append(transforms.CenterCrop(args.input_size))
 
     #t.append(transforms.ToTensor())
-    t.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
     return transforms.Compose(t)
